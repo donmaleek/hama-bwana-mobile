@@ -3,7 +3,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
   Dimensions,
   Image,
@@ -18,9 +17,9 @@ import {
   View
 } from "react-native";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Enhanced sample data
+// Enhanced sample data with Kenyan focus
 const featuredRentals = [
   {
     id: 1,
@@ -42,7 +41,9 @@ const featuredRentals = [
       name: "John Kamau",
       rating: 4.9,
       properties: 12
-    }
+    },
+    popular: true,
+    discount: "5% off first month"
   },
   {
     id: 2,
@@ -64,7 +65,9 @@ const featuredRentals = [
       name: "Sarah Mwangi",
       rating: 4.7,
       properties: 8
-    }
+    },
+    popular: false,
+    discount: null
   },
   {
     id: 3,
@@ -86,33 +89,35 @@ const featuredRentals = [
       name: "David Ochieng",
       rating: 4.8,
       properties: 15
-    }
+    },
+    popular: true,
+    discount: "Free first month utilities"
   },
 ];
 
 const categories = [
-  { id: 1, name: "Apartments", icon: "business", count: "1,247", color: "#003366" },
-  { id: 2, name: "Houses", icon: "home", count: "892", color: "#2E8B57" },
-  { id: 3, name: "Bedsitters", icon: "bed", count: "673", color: "#FF6B35" },
-  { id: 4, name: "Studios", icon: "square", count: "458", color: "#DAA520" },
-  { id: 5, name: "Commercial", icon: "briefcase", count: "324", color: "#9C27B0" },
-  { id: 6, name: "Luxury", icon: "diamond", count: "287", color: "#E91E63" },
+  { id: 1, name: "Apartments", icon: "business", count: "1,247", color: "#003366", gradient: ["#003366", "#0044CC"] },
+  { id: 2, name: "Houses", icon: "home", count: "892", color: "#2E8B57", gradient: ["#2E8B57", "#32CD32"] },
+  { id: 3, name: "Bedsitters", icon: "bed", count: "673", color: "#FF6B35", gradient: ["#FF6B35", "#FF8C00"] },
+  { id: 4, name: "Studios", icon: "square", count: "458", color: "#DAA520", gradient: ["#DAA520", "#FFD700"] },
+  { id: 5, name: "Commercial", icon: "briefcase", count: "324", color: "#9C27B0", gradient: ["#9C27B0", "#E91E63"] },
+  { id: 6, name: "Luxury", icon: "diamond", count: "287", color: "#E91E63", gradient: ["#E91E63", "#FF4081"] },
 ];
 
 const locations = [
-  { name: "Nairobi", properties: "2,458", image: "https://images.pexels.com/photos/2363/france-urban-city-construction.jpg" },
-  { name: "Mombasa", properties: "1,234", image: "https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg" },
-  { name: "Kisumu", properties: "856", image: "https://images.pexels.com/photos/2118126/pexels-photo-2118126.jpeg" },
-  { name: "Nakuru", properties: "723", image: "https://images.pexels.com/photos/235732/pexels-photo-235732.jpeg" },
-  { name: "Eldoret", properties: "589", image: "https://images.pexels.com/photos/235732/pexels-photo-235732.jpeg" },
-  { name: "Thika", properties: "467", image: "https://images.pexels.com/photos/235732/pexels-photo-235732.jpeg" },
+  { name: "Nairobi", properties: "2,458", image: "https://images.pexels.com/photos/2363/france-urban-city-construction.jpg", growth: "+12%" },
+  { name: "Mombasa", properties: "1,234", image: "https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg", growth: "+8%" },
+  { name: "Kisumu", properties: "856", image: "https://images.pexels.com/photos/2118126/pexels-photo-2118126.jpeg", growth: "+15%" },
+  { name: "Nakuru", properties: "723", image: "https://images.pexels.com/photos/235732/pexels-photo-235732.jpeg", growth: "+18%" },
+  { name: "Eldoret", properties: "589", image: "https://images.pexels.com/photos/235732/pexels-photo-235732.jpeg", growth: "+10%" },
+  { name: "Thika", properties: "467", image: "https://images.pexels.com/photos/235732/pexels-photo-235732.jpeg", growth: "+22%" },
 ];
 
 const stats = [
-  { value: "15,458", label: "Properties", icon: "business", change: "+12%" },
-  { value: "8,234", label: "Happy Tenants", icon: "people", change: "+8%" },
-  { value: "3,856", label: "Active Owners", icon: "person", change: "+15%" },
-  { value: "97%", label: "Satisfaction", icon: "heart", change: "+2%" },
+  { value: "50K+", label: "Properties", icon: "business", change: "+12%", description: "Across Kenya" },
+  { value: "24", label: "Cities", icon: "location", change: "+3", description: "Nationwide" },
+  { value: "98%", label: "Satisfaction", icon: "heart", change: "+2%", description: "Happy users" },
+  { value: "15min", label: "Avg Response", icon: "time", change: "-5min", description: "Fast support" },
 ];
 
 export default function HomeScreen() {
@@ -124,6 +129,7 @@ export default function HomeScreen() {
   const scrollY = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -135,6 +141,12 @@ export default function HomeScreen() {
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 100,
+        friction: 8,
         useNativeDriver: true,
       })
     ]).start();
@@ -150,23 +162,18 @@ export default function HomeScreen() {
     setRefreshing(true);
     setTimeout(() => {
       setRefreshing(false);
-      // Show refresh success animation
     }, 2000);
   };
 
   const handleRentalPress = (rental: any) => {
-    router.push({
-      pathname: "/rental-details",
-      params: { rental: JSON.stringify(rental) }
-    });
+    console.log("Viewing rental:", rental.title);
+    // You can add navigation to rental detail screen here
+    // router.push(`/rental/${rental.id}`);
   };
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      router.push({
-        pathname: "/(tabs)/explore",
-        params: { search: searchQuery }
-      });
+      router.push(`/(tabs)/explore?search=${encodeURIComponent(searchQuery)}`);
     }
   };
 
@@ -193,7 +200,7 @@ export default function HomeScreen() {
       description: "3D property views",
       color: "#FF6B35",
       gradient: ["#FF6B35", "#FF8C00"],
-      onPress: () => Alert.alert("Virtual Tours", "Experience properties in 3D - Coming Soon!")
+      onPress: () => console.log("Virtual Tours")
     },
     {
       title: "Price Insights",
@@ -201,7 +208,7 @@ export default function HomeScreen() {
       description: "Market analytics",
       color: "#DAA520",
       gradient: ["#DAA520", "#FFD700"],
-      onPress: () => Alert.alert("Price Insights", "Get real-time market data - Coming Soon!")
+      onPress: () => console.log("Price Insights")
     },
   ];
 
@@ -218,7 +225,8 @@ export default function HomeScreen() {
                 inputRange: [0, 1],
                 outputRange: [100, 0]
               })
-            }
+            },
+            { scale: scaleAnim }
           ]
         }
       ]}
@@ -241,13 +249,20 @@ export default function HomeScreen() {
                 <Text style={styles.verifiedBadgeText}>VERIFIED</Text>
               </View>
             )}
-            {rental.instantBooking && (
-              <View style={styles.instantBadge}>
-                <Ionicons name="flash" size={12} color="white" />
-                <Text style={styles.instantBadgeText}>INSTANT</Text>
+            {rental.popular && (
+              <View style={styles.popularBadge}>
+                <Ionicons name="flame" size={12} color="white" />
+                <Text style={styles.popularBadgeText}>TRENDING</Text>
               </View>
             )}
           </View>
+
+          {/* Discount Badge */}
+          {rental.discount && (
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountText}>{rental.discount}</Text>
+            </View>
+          )}
 
           {/* Favorite Button */}
           <TouchableOpacity style={styles.favoriteButton}>
@@ -276,11 +291,11 @@ export default function HomeScreen() {
           <View style={styles.featuredDetails}>
             <View style={styles.detailItem}>
               <Ionicons name="bed" size={18} color="#003366" />
-              <Text style={styles.detailText}>{rental.bedrooms}</Text>
+              <Text style={styles.detailText}>{rental.bedrooms} bed</Text>
             </View>
             <View style={styles.detailItem}>
               <Ionicons name="water" size={18} color="#003366" />
-              <Text style={styles.detailText}>{rental.bathrooms}</Text>
+              <Text style={styles.detailText}>{rental.bathrooms} bath</Text>
             </View>
             <View style={styles.detailItem}>
               <Ionicons name="expand" size={18} color="#003366" />
@@ -327,9 +342,13 @@ export default function HomeScreen() {
       {/* Animated Header */}
       <Animated.View style={[styles.animatedHeader, { opacity: headerOpacity }]}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Hama Bwana</Text>
+          <View style={styles.logoContainer}>
+            <Ionicons name="home" size={24} color="#003366" />
+            <Text style={styles.headerTitle}>Hama Bwana</Text>
+          </View>
           <TouchableOpacity style={styles.headerButton}>
-            <Ionicons name="notifications" size={22} color="#003366" />
+            <Ionicons name="notifications-outline" size={22} color="#003366" />
+            <View style={styles.notificationDot} />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -363,18 +382,18 @@ export default function HomeScreen() {
                 }
               ]}
             >
-              <Text style={styles.greeting}>Welcome back! 👋</Text>
-              <Text style={styles.userName}>Find your perfect home</Text>
+              <Text style={styles.greeting}>Karibu! 👋</Text>
+              <Text style={styles.userName}>Find Your Perfect Home in Kenya</Text>
+              <Text style={styles.welcomeSubtitle}>50,000+ verified properties nationwide</Text>
             </Animated.View>
             
             <TouchableOpacity 
               style={styles.profileButton}
               onPress={() => router.push("/(tabs)/profile")}
             >
-              <Image 
-                source={require('../assets/profile.png')} 
-                style={styles.profileImage} 
-              />
+              <View style={styles.profilePlaceholder}>
+                <Ionicons name="person" size={20} color="#003366" />
+              </View>
               <View style={styles.notificationBadge}>
                 <Text style={styles.notificationText}>3</Text>
               </View>
@@ -391,16 +410,18 @@ export default function HomeScreen() {
               }
             ]}
           >
-            <Ionicons name="search" size={20} color="#666" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search by location, price, amenities..."
-              placeholderTextColor="#999"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onSubmitEditing={handleSearch}
-              returnKeyType="search"
-            />
+            <View style={styles.searchInputContainer}>
+              <Ionicons name="search" size={20} color="#666" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search location, price, amenities..."
+                placeholderTextColor="#999"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={handleSearch}
+                returnKeyType="search"
+              />
+            </View>
             <TouchableOpacity 
               style={styles.searchButton}
               onPress={handleSearch}
@@ -421,115 +442,130 @@ export default function HomeScreen() {
           ]}
         >
           {stats.map((stat, index) => (
-            <View key={index} style={styles.statItem}>
-              <View style={styles.statIcon}>
-                <Ionicons name={stat.icon as any} size={20} color="#003366" />
+            <View key={index} style={styles.statCard}>
+              <View style={[styles.statIcon, { backgroundColor: `${stat.color}15` }]}>
+                <Ionicons name={stat.icon as any} size={20} color={stat.color} />
               </View>
               <Text style={styles.statValue}>{stat.value}</Text>
               <Text style={styles.statLabel}>{stat.label}</Text>
-              <Text style={styles.statChange}>↑ {stat.change}</Text>
+              <Text style={styles.statDescription}>{stat.description}</Text>
+              <View style={styles.statChange}>
+                <Ionicons name="trending-up" size={12} color="#2E8B57" />
+                <Text style={styles.statChangeText}>{stat.change}</Text>
+              </View>
             </View>
           ))}
         </Animated.View>
 
         {/* Quick Actions */}
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.actionsScroll}
-          contentContainerStyle={styles.actionsContent}
-        >
-          {quickActions.map((action, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[styles.actionCard, { backgroundColor: action.color }]}
-              onPress={action.onPress}
-            >
-              <View style={styles.actionIcon}>
-                <Ionicons name={action.icon as any} size={24} color="white" />
-              </View>
-              <Text style={styles.actionText}>{action.title}</Text>
-              <Text style={styles.actionDescription}>{action.description}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.actionsScroll}
+            contentContainerStyle={styles.actionsContent}
+          >
+            {quickActions.map((action, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[styles.actionCard, { backgroundColor: action.color }]}
+                onPress={action.onPress}
+              >
+                <View style={styles.actionIcon}>
+                  <Ionicons name={action.icon as any} size={24} color="white" />
+                </View>
+                <Text style={styles.actionTitle}>{action.title}</Text>
+                <Text style={styles.actionDescription}>{action.description}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
         {/* Categories */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Browse Categories</Text>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/explore")}>
-            <Text style={styles.seeAllText}>View All</Text>
-          </TouchableOpacity>
-        </View>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesScroll}
-          contentContainerStyle={styles.categoriesContent}
-        >
-          {categories.map((category, index) => (
-            <TouchableOpacity 
-              key={category.id} 
-              style={[
-                styles.categoryCard,
-                { backgroundColor: category.color }
-              ]}
-              onPress={() => setActiveCategory(category.name.toLowerCase())}
-            >
-              <View style={styles.categoryIcon}>
-                <Ionicons name={category.icon as any} size={24} color="white" />
-              </View>
-              <Text style={styles.categoryName}>{category.name}</Text>
-              <Text style={styles.categoryCount}>{category.count}</Text>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Browse Categories</Text>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/explore")}>
+              <Text style={styles.seeAllText}>View All</Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+          </View>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.categoriesScroll}
+            contentContainerStyle={styles.categoriesContent}
+          >
+            {categories.map((category, index) => (
+              <TouchableOpacity 
+                key={category.id} 
+                style={[
+                  styles.categoryCard,
+                  { backgroundColor: category.color }
+                ]}
+                onPress={() => setActiveCategory(category.name.toLowerCase())}
+              >
+                <View style={styles.categoryIcon}>
+                  <Ionicons name={category.icon as any} size={24} color="white" />
+                </View>
+                <Text style={styles.categoryName}>{category.name}</Text>
+                <Text style={styles.categoryCount}>{category.count} properties</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
         {/* Popular Locations */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Popular Locations</Text>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/map")}>
-            <Text style={styles.seeAllText}>View Map</Text>
-          </TouchableOpacity>
-        </View>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.locationsScroll}
-          contentContainerStyle={styles.locationsContent}
-        >
-          {locations.map((location, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.locationCard}
-              onPress={() => setSelectedLocation(location.name)}
-            >
-              <Image source={{ uri: location.image }} style={styles.locationImage} />
-              <View style={styles.locationOverlay} />
-              <View style={styles.locationContent}>
-                <Text style={styles.locationName}>{location.name}</Text>
-                <Text style={styles.locationProperties}>{location.properties} properties</Text>
-              </View>
-              {selectedLocation === location.name && (
-                <View style={styles.selectedIndicator}>
-                  <Ionicons name="checkmark" size={16} color="white" />
-                </View>
-              )}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Popular Locations</Text>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/map")}>
+              <Text style={styles.seeAllText}>View Map</Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+          </View>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.locationsScroll}
+            contentContainerStyle={styles.locationsContent}
+          >
+            {locations.map((location, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.locationCard}
+                onPress={() => setSelectedLocation(location.name)}
+              >
+                <Image source={{ uri: location.image }} style={styles.locationImage} />
+                <View style={styles.locationOverlay} />
+                <View style={styles.locationContent}>
+                  <Text style={styles.locationName}>{location.name}</Text>
+                  <Text style={styles.locationProperties}>{location.properties} properties</Text>
+                  <View style={styles.growthBadge}>
+                    <Text style={styles.growthText}>{location.growth}</Text>
+                  </View>
+                </View>
+                {selectedLocation === location.name && (
+                  <View style={styles.selectedIndicator}>
+                    <Ionicons name="checkmark" size={16} color="white" />
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
         {/* Featured Rentals */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Premium Properties</Text>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/explore")}>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Premium Properties</Text>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/explore")}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
 
-        <View style={styles.featuredGrid}>
-          {featuredRentals.map(renderFeaturedCard)}
+          <View style={styles.featuredGrid}>
+            {featuredRentals.map(renderFeaturedCard)}
+          </View>
         </View>
 
         {/* AI Recommendation Section */}
@@ -539,7 +575,7 @@ export default function HomeScreen() {
             <Text style={styles.aiTitle}>AI Smart Recommendations</Text>
           </View>
           <Text style={styles.aiDescription}>
-            Our AI analyzes your preferences to show you properties you'll love
+            Our AI analyzes your preferences to show you properties you'll love across Kenya
           </Text>
           <TouchableOpacity style={styles.aiButton}>
             <Text style={styles.aiButtonText}>Get Personalized Matches</Text>
@@ -556,7 +592,6 @@ export default function HomeScreen() {
         onPress={() => router.push("/publish")}
       >
         <Ionicons name="add" size={24} color="white" />
-        <View style={styles.floatingButtonPulse} />
       </TouchableOpacity>
     </View>
   );
@@ -574,9 +609,6 @@ const styles = StyleSheet.create({
     right: 0,
     height: 90,
     backgroundColor: 'white',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 40,
     zIndex: 1000,
@@ -598,12 +630,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#003366',
+    marginLeft: 8,
   },
   headerButton: {
     width: 40,
@@ -612,6 +648,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f4ff',
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF4444',
   },
   header: {
     backgroundColor: "#ffffff",
@@ -645,21 +691,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     marginBottom: 4,
+    fontWeight: '600',
   },
   userName: {
     fontSize: 24,
     fontWeight: "800",
     color: "#003366",
+    marginBottom: 4,
+    letterSpacing: -0.5,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: '500',
   },
   profileButton: {
     position: "relative",
   },
-  profileImage: {
+  profilePlaceholder: {
     width: 50,
     height: 50,
     borderRadius: 25,
+    backgroundColor: '#f0f4ff',
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 2,
-    borderColor: "#0033A0",
+    borderColor: '#003366',
   },
   notificationBadge: {
     position: "absolute",
@@ -684,10 +741,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#ffffff",
     borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     borderWidth: 2,
     borderColor: "#f0f4ff",
+    overflow: 'hidden',
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -700,23 +756,50 @@ const styles = StyleSheet.create({
       },
     })
   },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
   searchInput: {
     flex: 1,
     marginLeft: 12,
     fontSize: 16,
     color: "#333",
-    paddingVertical: 8,
+    fontWeight: '500',
   },
   searchButton: {
     backgroundColor: "#003366",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 50,
+    height: '100%',
     justifyContent: "center",
     alignItems: "center",
   },
   scrollView: {
     flex: 1,
+  },
+  section: {
+    marginBottom: 25,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#003366",
+    letterSpacing: -0.3,
+  },
+  seeAllText: {
+    color: "#0033A0",
+    fontWeight: "700",
+    fontSize: 14,
   },
   statsContainer: {
     flexDirection: "row",
@@ -724,13 +807,12 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 12,
   },
-  statItem: {
+  statCard: {
     flex: 1,
     minWidth: '45%',
     backgroundColor: "white",
     padding: 16,
     borderRadius: 16,
-    alignItems: "center",
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -747,7 +829,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#f0f4ff",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
@@ -756,38 +837,31 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "800",
     color: "#003366",
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: "#666",
     marginBottom: 2,
   },
+  statLabel: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  statDescription: {
+    fontSize: 12,
+    color: "#999",
+    marginBottom: 4,
+  },
   statChange: {
-    fontSize: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statChangeText: {
+    fontSize: 12,
     color: "#2E8B57",
     fontWeight: "600",
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 15,
-    marginTop: 10,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#003366",
-  },
-  seeAllText: {
-    color: "#0033A0",
-    fontWeight: "600",
-    fontSize: 14,
+    marginLeft: 4,
   },
   actionsScroll: {
-    marginBottom: 25,
+    marginBottom: 10,
   },
   actionsContent: {
     paddingHorizontal: 15,
@@ -819,7 +893,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  actionText: {
+  actionTitle: {
     fontSize: 16,
     fontWeight: "700",
     color: "#FFFFFF",
@@ -830,7 +904,7 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.8)",
   },
   categoriesScroll: {
-    marginBottom: 25,
+    marginBottom: 10,
   },
   categoriesContent: {
     paddingHorizontal: 15,
@@ -874,14 +948,14 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.8)",
   },
   locationsScroll: {
-    marginBottom: 25,
+    marginBottom: 10,
   },
   locationsContent: {
     paddingHorizontal: 15,
   },
   locationCard: {
-    width: 120,
-    height: 160,
+    width: 140,
+    height: 180,
     borderRadius: 16,
     marginRight: 12,
     overflow: "hidden",
@@ -910,6 +984,19 @@ const styles = StyleSheet.create({
   locationProperties: {
     fontSize: 12,
     color: "rgba(255,255,255,0.8)",
+    marginBottom: 4,
+  },
+  growthBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#2E8B57',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  growthText: {
+    fontSize: 10,
+    color: 'white',
+    fontWeight: '700',
   },
   selectedIndicator: {
     position: "absolute",
@@ -984,7 +1071,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginLeft: 4,
   },
-  instantBadge: {
+  popularBadge: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FF6B35",
@@ -992,11 +1079,25 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  instantBadgeText: {
+  popularBadgeText: {
     color: "white",
     fontSize: 10,
     fontWeight: "700",
     marginLeft: 4,
+  },
+  discountBadge: {
+    position: "absolute",
+    top: 12,
+    right: 60,
+    backgroundColor: "#DAA520",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  discountText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "700",
   },
   favoriteButton: {
     position: "absolute",
@@ -1010,20 +1111,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   featuredContent: {
-    padding: 20,
+    padding: 16,
   },
   featuredHeader: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   titleContainer: {
-    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   featuredTitle: {
-    fontSize: 20,
-    fontWeight: "800",
+    fontSize: 18,
+    fontWeight: "700",
     color: "#003366",
-    marginBottom: 8,
-    lineHeight: 24,
+    flex: 1,
+    marginRight: 8,
   },
   ratingContainer: {
     flexDirection: "row",
@@ -1043,47 +1146,43 @@ const styles = StyleSheet.create({
   locationContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   featuredLocation: {
     fontSize: 14,
     color: "#666",
-    marginLeft: 6,
+    marginLeft: 4,
   },
   distance: {
-    fontSize: 12,
+    fontSize: 14,
     color: "#999",
-    marginLeft: 8,
+    marginLeft: 4,
   },
   featuredDetails: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#f0f0f0",
+    justifyContent: "space-between",
+    marginBottom: 12,
   },
   detailItem: {
+    flexDirection: "row",
     alignItems: "center",
   },
   detailText: {
     fontSize: 14,
-    color: "#003366",
-    marginTop: 4,
-    fontWeight: "600",
+    color: "#666",
+    marginLeft: 4,
   },
   amenities: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 20,
+    alignItems: "center",
+    marginBottom: 16,
   },
   amenityTag: {
     backgroundColor: "#f0f4ff",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 8,
+    marginRight: 8,
   },
   amenityText: {
     fontSize: 12,
@@ -1092,9 +1191,8 @@ const styles = StyleSheet.create({
   },
   moreAmenities: {
     fontSize: 12,
-    color: "#666",
-    fontStyle: "italic",
-    alignSelf: "center",
+    color: "#999",
+    fontWeight: "500",
   },
   priceSection: {
     flexDirection: "row",
@@ -1102,14 +1200,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   price: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "800",
-    color: "#DAA520",
+    color: "#003366",
   },
   pricePeriod: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#666",
-    marginTop: 2,
   },
   actionButtons: {
     flexDirection: "row",
@@ -1119,39 +1216,37 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f0f4ff",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 12,
-    gap: 6,
+    gap: 4,
   },
   contactButtonText: {
+    fontSize: 14,
     color: "#003366",
     fontWeight: "600",
-    fontSize: 14,
   },
   tourButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#003366",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 12,
-    gap: 6,
+    gap: 4,
   },
   tourButtonText: {
+    fontSize: 14,
     color: "white",
     fontWeight: "600",
-    fontSize: 14,
   },
   aiSection: {
-    backgroundColor: "#f0f8ff",
-    margin: 20,
+    backgroundColor: "#f8f9ff",
+    marginHorizontal: 20,
+    marginBottom: 30,
     padding: 24,
     borderRadius: 20,
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#003366",
-    borderStyle: "dashed",
   },
   aiHeader: {
     flexDirection: "row",
@@ -1168,7 +1263,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 16,
     lineHeight: 20,
   },
   aiButton: {
@@ -1177,12 +1272,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#003366",
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     gap: 8,
   },
   aiButtonText: {
+    fontSize: 16,
     color: "white",
-    fontSize: 14,
     fontWeight: "600",
   },
   bottomSpacer: {
@@ -1209,13 +1304,5 @@ const styles = StyleSheet.create({
         elevation: 8,
       },
     })
-  },
-  floatingButtonPulse: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: "#003366",
-    opacity: 0.5,
-    animation: "pulse 2s infinite",
   },
 });
