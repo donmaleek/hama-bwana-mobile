@@ -1,92 +1,195 @@
 // app/(tabs)/featured.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  Alert,
+  Animated,
+  Dimensions,
   Image,
+  Platform,
   RefreshControl,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View
 } from "react-native";
 
-const sampleRentals = [
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// World-class premium properties data
+const premiumRentals = [
   {
     id: 1,
-    name: "Modern 2 Bedroom Apartment",
-    price: "35,000",
-    location: "Nairobi, Kilimani",
-    image: "https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg",
-    bedrooms: 2,
-    bathrooms: 2,
-    size: "1200 sq ft",
-    rating: 4.8,
-    reviews: 24,
-    amenities: ["WiFi", "Parking", "Security"],
-    isFeatured: true,
-    availableFrom: "2024-02-01",
-    description: "A beautiful modern apartment with stunning city views and premium amenities."
+    name: "Skyline Penthouse with Infinity Pool",
+    price: "450,000",
+    location: "Upper Hill, Nairobi",
+    image: "https://images.pexels.com/photos/259962/pexels-photo-259962.jpeg",
+    images: [
+      "https://images.pexels.com/photos/259962/pexels-photo-259962.jpeg",
+      "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg",
+      "https://images.pexels.com/photos/271619/pexels-photo-271619.jpeg"
+    ],
+    bedrooms: 4,
+    bathrooms: 4,
+    size: "3200 sq ft",
+    rating: 4.9,
+    reviews: 89,
+    amenities: ["Infinity Pool", "Smart Home", "Private Gym", "Concierge", "Wine Cellar", "Home Theater"],
+    category: "ultra-luxury",
+    features: ["Panoramic City Views", "Private Elevator", "Smart Lighting", "Heated Floors"],
+    owner: {
+      name: "Elite Living Group",
+      rating: 4.9,
+      verified: true,
+      premium: true,
+      responseTime: "5 min"
+    },
+    virtualTour: true,
+    instantBooking: true,
+    distance: "0.5 km",
+    availableFrom: "2024-03-01",
+    sustainability: ["Solar Powered", "Water Recycling", "EV Charging"],
+    security: ["Biometric Access", "24/7 Security", "CCTV"]
   },
   {
     id: 2,
-    name: "Studio Bedsitter",
-    price: "12,000",
-    location: "Nakuru Town",
-    image: "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg",
-    bedrooms: 1,
-    bathrooms: 1,
-    size: "600 sq ft",
-    rating: 4.5,
-    reviews: 18,
-    amenities: ["WiFi", "Water Included"],
-    isFeatured: true,
-    availableFrom: "Immediately",
-    description: "Cozy and affordable studio perfect for students and young professionals."
+    name: "Beachfront Luxury Villa",
+    price: "680,000",
+    location: "Diani Beach, Mombasa",
+    image: "https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg",
+    images: [
+      "https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg",
+      "https://images.pexels.com/photos/1571459/pexels-photo-1571459.jpeg"
+    ],
+    bedrooms: 5,
+    bathrooms: 5,
+    size: "4800 sq ft",
+    rating: 4.8,
+    reviews: 67,
+    amenities: ["Private Beach", "Infinity Pool", "Spa", "Chef's Kitchen", "Gardens", "Parking"],
+    category: "ultra-luxury",
+    features: ["Direct Beach Access", "Outdoor Kitchen", "Yoga Deck", "Private Dock"],
+    owner: {
+      name: "Coastal Retreats",
+      rating: 4.8,
+      verified: true,
+      premium: true,
+      responseTime: "10 min"
+    },
+    virtualTour: true,
+    instantBooking: false,
+    distance: "Beachfront",
+    availableFrom: "2024-02-15",
+    sustainability: ["Rainwater Harvesting", "Native Landscaping"],
+    security: ["Gated Community", "Beach Security", "Alarm System"]
   },
   {
     id: 3,
-    name: "3 Bedroom Luxury House",
-    price: "80,000",
-    location: "Mombasa Nyali",
-    image: "https://images.pexels.com/photos/1571459/pexels-photo-1571459.jpeg",
+    name: "Smart Executive Residence",
+    price: "185,000",
+    location: "Westlands, Nairobi",
+    image: "https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg",
+    images: [
+      "https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg",
+      "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg"
+    ],
     bedrooms: 3,
     bathrooms: 3,
-    size: "2000 sq ft",
-    rating: 4.9,
-    reviews: 32,
-    amenities: ["Pool", "Gym", "Parking", "Security", "Garden"],
-    isFeatured: true,
-    availableFrom: "2024-02-15",
-    description: "Luxurious beachfront property with premium amenities and stunning ocean views."
+    size: "1800 sq ft",
+    rating: 4.7,
+    reviews: 42,
+    amenities: ["Rooftop Pool", "Business Center", "Fitness Studio", "Concierge", "Co-working"],
+    category: "premium",
+    features: ["Smart Home System", "City Views", "Balcony", "Walk-in Closet"],
+    owner: {
+      name: "Urban Prime",
+      rating: 4.7,
+      verified: true,
+      premium: true,
+      responseTime: "15 min"
+    },
+    virtualTour: true,
+    instantBooking: true,
+    distance: "0.8 km",
+    availableFrom: "Immediately",
+    sustainability: ["Energy Efficient", "Green Building"],
+    security: ["Access Control", "Security Patrol"]
   },
   {
     id: 4,
-    name: "1 Bedroom Cozy Apartment",
-    price: "18,000",
-    location: "Nairobi, Westlands",
-    image: "https://images.pexels.com/photos/259962/pexels-photo-259962.jpeg",
-    bedrooms: 1,
-    bathrooms: 1,
-    size: "800 sq ft",
+    name: "Designer Loft with Terrace",
+    price: "95,000",
+    location: "Kileleshwa, Nairobi",
+    image: "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg",
+    images: [
+      "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg",
+      "https://images.pexels.com/photos/271618/pexels-photo-271618.jpeg"
+    ],
+    bedrooms: 2,
+    bathrooms: 2,
+    size: "1200 sq ft",
     rating: 4.6,
-    reviews: 15,
-    amenities: ["WiFi", "Security"],
-    isFeatured: false,
-    availableFrom: "Immediately",
-    description: "Modern apartment in the heart of Westlands with easy access to amenities."
-  },
+    reviews: 31,
+    amenities: ["Private Terrace", "Smart Home", "Gym", "Pool", "Co-working"],
+    category: "premium",
+    features: ["Open Plan", "High Ceilings", "Terrace Garden", "Smart Lighting"],
+    owner: {
+      name: "Modern Spaces",
+      rating: 4.6,
+      verified: true,
+      premium: true,
+      responseTime: "20 min"
+    },
+    virtualTour: true,
+    instantBooking: true,
+    distance: "1.2 km",
+    availableFrom: "2024-02-01",
+    sustainability: ["LED Lighting", "Eco-friendly Materials"],
+    security: ["Secure Parking", "Intercom"]
+  }
 ];
 
 export default function Featured() {
-  const [rentals, setRentals] = useState(sampleRentals);
+  const [rentals, setRentals] = useState(premiumRentals);
   const [favorites, setFavorites] = useState<number[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideUpAnim = useRef(new Animated.Value(30)).current;
 
-  // Filter to show only featured rentals
-  const featuredRentals = rentals.filter(rental => rental.isFeatured);
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideUpAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 80, 160],
+    outputRange: [0, 0.5, 1],
+    extrapolate: 'clamp'
+  });
+
+  const filteredRentals = rentals.filter(rental => {
+    const matchesFilter = activeFilter === 'all' || rental.category === activeFilter;
+    const matchesSearch = rental.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         rental.location.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
   const toggleFavorite = (id: number) => {
     setFavorites(prev => 
@@ -94,12 +197,6 @@ export default function Featured() {
         ? prev.filter(favId => favId !== id)
         : [...prev, id]
     );
-    
-    // Show feedback
-    const rental = rentals.find(r => r.id === id);
-    if (rental && !favorites.includes(id)) {
-      Alert.alert("Added to Favorites", `"${rental.name}" added to your favorites`);
-    }
   };
 
   const handleRentalPress = (rental: any) => {
@@ -109,272 +206,419 @@ export default function Featured() {
     });
   };
 
-  const handleContactOwner = (rental: any) => {
-    Alert.alert(
-      "Contact Owner",
-      `Interested in "${rental.name}"?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Call Agent", 
-          onPress: () => Alert.alert("Call", `Calling agent for ${rental.name}`)
-        },
-        {
-          text: "Send Message",
-          onPress: () => Alert.alert("Message", `Messaging agent for ${rental.name}`)
-        },
-        {
-          text: "View Details",
-          onPress: () => handleRentalPress(rental)
-        }
-      ]
-    );
-  };
-
   const refreshRentals = async () => {
     setRefreshing(true);
-    // Simulate API call
     setTimeout(() => {
       setRefreshing(false);
-      Alert.alert("Refreshed", "Latest featured properties loaded!");
     }, 1500);
   };
 
   const formatPrice = (price: string) => {
-    return `Ksh ${parseInt(price).toLocaleString()}/month`;
+    return `Ksh ${parseInt(price.replace(/,/g, '')).toLocaleString()}/month`;
   };
 
-  const getPriceColor = (price: string) => {
-    const priceNum = parseInt(price);
-    if (priceNum < 20000) return "#2E8B57"; // Green for affordable
-    if (priceNum < 50000) return "#DAA520"; // Gold for medium
-    return "#FF6B35"; // Orange for premium
+  const getPriceCategory = (price: string) => {
+    const priceNum = parseInt(price.replace(/,/g, ''));
+    if (priceNum < 100000) return { label: "Premium", color: "#2E8B57", bgColor: "#e8f5e8" };
+    if (priceNum < 300000) return { label: "Luxury", color: "#DAA520", bgColor: "#fff8e1" };
+    return { label: "Ultra Luxury", color: "#FF6B35", bgColor: "#ffe8e8" };
   };
 
-  const getAffordabilityLabel = (price: string) => {
-    const priceNum = parseInt(price);
-    if (priceNum < 20000) return "Budget Friendly";
-    if (priceNum < 50000) return "Great Value";
-    return "Premium";
-  };
+  const filters = [
+    { id: 'all', label: 'All Premium', icon: 'diamond', count: rentals.length },
+    { id: 'ultra-luxury', label: 'Ultra Luxury', icon: 'sparkles', count: rentals.filter(r => r.category === 'ultra-luxury').length },
+    { id: 'premium', label: 'Premium', icon: 'star', count: rentals.filter(r => r.category === 'premium').length },
+  ];
 
-  return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <Text style={styles.title}>Featured Rentals</Text>
-          <Text style={styles.subtitle}>Premium hand-picked properties</Text>
-        </View>
-        <TouchableOpacity 
-          style={styles.filterButton}
-          onPress={() => Alert.alert("Filter", "Filter options coming soon!")}
-        >
-          <Ionicons name="filter" size={20} color="#003366" />
-        </TouchableOpacity>
-      </View>
+  const stats = [
+    { value: "15.2K", label: "Premium Members", icon: "people", trend: "+12%" },
+    { value: "4.8★", label: "Avg. Rating", icon: "star", trend: "+0.2" },
+    { value: "98%", label: "Verified", icon: "shield-checkmark", trend: "+2%" },
+    { value: "<15min", label: "Avg. Response", icon: "time", trend: "-5min" },
+  ];
 
-      {/* Stats Bar */}
-      <View style={styles.statsBar}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{featuredRentals.length}</Text>
-          <Text style={styles.statLabel}>Premium Listings</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>
-            Ksh {Math.min(...featuredRentals.map(r => parseInt(r.price))).toLocaleString()}
-          </Text>
-          <Text style={styles.statLabel}>Starting From</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>
-            {Math.max(...featuredRentals.map(r => r.rating))}
-          </Text>
-          <Text style={styles.statLabel}>Top Rated</Text>
-        </View>
-      </View>
+  const worldClassFeatures = [
+    {
+      icon: "globe",
+      title: "Global Standards",
+      description: "Properties meeting international luxury standards"
+    },
+    {
+      icon: "shield-checkmark",
+      title: "Verified Quality",
+      description: "Every property undergoes 50+ quality checks"
+    },
+    {
+      icon: "rocket",
+      title: "Instant Booking",
+      description: "Reserve premium properties instantly"
+    },
+    {
+      icon: "videocam",
+      title: "Virtual Tours",
+      description: "3D property tours from anywhere"
+    }
+  ];
 
-      <ScrollView 
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={refreshRentals}
-            colors={["#0033A0"]}
-            tintColor="#0033A0"
-          />
-        }
+  const renderPremiumCard = (rental: any, index: number) => {
+    const priceCategory = getPriceCategory(rental.price);
+    
+    return (
+      <Animated.View
+        key={rental.id}
+        style={[
+          styles.premiumCard,
+          {
+            opacity: fadeAnim,
+            transform: [
+              {
+                translateY: fadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [50, 0]
+                })
+              }
+            ]
+          }
+        ]}
       >
-        {/* Search Bar */}
-        <TouchableOpacity 
-          style={styles.searchBar}
-          onPress={() => Alert.alert("Search", "Search featured rentals coming soon!")}
-        >
-          <Ionicons name="search" size={20} color="#666" />
-          <Text style={styles.searchText}>Search featured rentals...</Text>
-          <Ionicons name="sparkles" size={16} color="#0033A0" />
-        </TouchableOpacity>
-
-        {/* Premium Badge */}
-        <View style={styles.premiumBadge}>
-          <Ionicons name="diamond" size={16} color="#DAA520" />
-          <Text style={styles.premiumText}>PREMIUM SELECTION</Text>
-        </View>
-
-        {/* Featured Rentals */}
-        <Text style={styles.sectionTitle}>Exclusive Properties</Text>
-        <Text style={styles.sectionSubtitle}>
-          Hand-picked quality properties with premium amenities
-        </Text>
-
-        {featuredRentals.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="home-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyStateTitle}>No Featured Properties</Text>
-            <Text style={styles.emptyStateText}>
-              Check back later for new premium listings
-            </Text>
-          </View>
-        ) : (
-          featuredRentals.map((rental) => (
-            <TouchableOpacity
-              key={rental.id}
-              style={styles.card}
-              onPress={() => handleRentalPress(rental)}
-              activeOpacity={0.9}
-            >
-              {/* Image with Badges */}
-              <View style={styles.imageContainer}>
-                <Image source={{ uri: rental.image }} style={styles.image} />
-                
-                {/* Featured Badge */}
-                <View style={styles.featuredBadge}>
-                  <Ionicons name="star" size={12} color="white" />
-                  <Text style={styles.featuredText}>FEATURED</Text>
-                </View>
-
-                {/* Affordability Badge */}
-                <View style={styles.affordabilityBadge}>
-                  <Text style={styles.affordabilityText}>
-                    {getAffordabilityLabel(rental.price)}
+        <TouchableOpacity onPress={() => handleRentalPress(rental)} activeOpacity={0.95}>
+          {/* Enhanced Image Section */}
+          <View style={styles.cardMedia}>
+            <Image source={{ uri: rental.image }} style={styles.cardImage} />
+            
+            {/* Premium Badges */}
+            <View style={styles.mediaOverlay}>
+              <View style={styles.badgeContainer}>
+                <View style={[styles.categoryBadge, { backgroundColor: priceCategory.bgColor }]}>
+                  <Ionicons name="diamond" size={12} color={priceCategory.color} />
+                  <Text style={[styles.categoryText, { color: priceCategory.color }]}>
+                    {priceCategory.label}
                   </Text>
                 </View>
+                
+                {rental.virtualTour && (
+                  <View style={styles.featureBadge}>
+                    <Ionicons name="videocam" size={10} color="white" />
+                    <Text style={styles.featureBadgeText}>3D TOUR</Text>
+                  </View>
+                )}
+                
+                {rental.instantBooking && (
+                  <View style={styles.featureBadge}>
+                    <Ionicons name="flash" size={10} color="white" />
+                    <Text style={styles.featureBadgeText}>INSTANT</Text>
+                  </View>
+                )}
+              </View>
 
-                {/* Favorite Button */}
+              {/* Action Buttons */}
+              <View style={styles.actionContainer}>
                 <TouchableOpacity 
-                  style={styles.favoriteButton}
+                  style={styles.iconButton}
                   onPress={() => toggleFavorite(rental.id)}
                 >
                   <Ionicons 
                     name={favorites.includes(rental.id) ? "heart" : "heart-outline"} 
-                    size={24} 
+                    size={20} 
                     color={favorites.includes(rental.id) ? "#ff4444" : "white"} 
                   />
                 </TouchableOpacity>
+                
+                {rental.virtualTour && (
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="play" size={18} color="white" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
 
-                {/* Quick Info Overlay */}
-                <View style={styles.imageOverlay}>
-                  <View style={styles.quickInfo}>
-                    <View style={styles.quickInfoItem}>
-                      <Ionicons name="bed-outline" size={14} color="white" />
-                      <Text style={styles.quickInfoText}>{rental.bedrooms}</Text>
-                    </View>
-                    <View style={styles.quickInfoItem}>
-                      <Ionicons name="water-outline" size={14} color="white" />
-                      <Text style={styles.quickInfoText}>{rental.bathrooms}</Text>
-                    </View>
-                    <View style={styles.quickInfoItem}>
-                      <Ionicons name="resize-outline" size={14} color="white" />
-                      <Text style={styles.quickInfoText}>{rental.size}</Text>
-                    </View>
-                  </View>
+            {/* Quick Stats Bar */}
+            <View style={styles.statsBar}>
+              <View style={styles.statPill}>
+                <Ionicons name="bed" size={14} color="white" />
+                <Text style={styles.statPillText}>{rental.bedrooms}</Text>
+              </View>
+              <View style={styles.statPill}>
+                <Ionicons name="water" size={14} color="white" />
+                <Text style={styles.statPillText}>{rental.bathrooms}</Text>
+              </View>
+              <View style={styles.statPill}>
+                <Ionicons name="expand" size={14} color="white" />
+                <Text style={styles.statPillText}>{rental.size}</Text>
+              </View>
+              <View style={styles.statPill}>
+                <Ionicons name="location" size={14} color="white" />
+                <Text style={styles.statPillText}>{rental.distance}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Enhanced Content Section */}
+          <View style={styles.cardContent}>
+            {/* Header */}
+            <View style={styles.contentHeader}>
+              <View style={styles.titleSection}>
+                <Text style={styles.propertyName} numberOfLines={2}>{rental.name}</Text>
+                <View style={styles.ratingSection}>
+                  <Ionicons name="star" size={14} color="#FFD700" />
+                  <Text style={styles.rating}>{rental.rating}</Text>
+                  <Text style={styles.reviews}>({rental.reviews})</Text>
                 </View>
               </View>
+            </View>
 
-              {/* Rental Info */}
-              <View style={styles.info}>
-                <View style={styles.infoHeader}>
-                  <Text style={styles.name} numberOfLines={2}>{rental.name}</Text>
-                  <View style={styles.ratingContainer}>
-                    <Ionicons name="star" size={16} color="#FFD700" />
-                    <Text style={styles.rating}>{rental.rating}</Text>
-                    <Text style={styles.reviews}>({rental.reviews})</Text>
-                  </View>
+            {/* Location & Owner */}
+            <View style={styles.metaSection}>
+              <View style={styles.locationRow}>
+                <Ionicons name="location" size={14} color="#666" />
+                <Text style={styles.location}>{rental.location}</Text>
+              </View>
+              <View style={styles.ownerRow}>
+                <Ionicons name="business" size={12} color="#2E8B57" />
+                <Text style={styles.ownerName}>{rental.owner.name}</Text>
+                <Text style={styles.responseTime}>• {rental.owner.responseTime}</Text>
+              </View>
+            </View>
+
+            {/* Key Features */}
+            <View style={styles.featuresGrid}>
+              {rental.features.slice(0, 2).map((feature: string, idx: number) => (
+                <View key={idx} style={styles.featureChip}>
+                  <Ionicons name="checkmark-circle" size={12} color="#2E8B57" />
+                  <Text style={styles.featureChipText}>{feature}</Text>
                 </View>
+              ))}
+            </View>
 
-                <View style={styles.locationContainer}>
-                  <Ionicons name="location-outline" size={14} color="#666" />
-                  <Text style={styles.location}>{rental.location}</Text>
+            {/* Sustainability & Security */}
+            <View style={styles.specsRow}>
+              {rental.sustainability && (
+                <View style={styles.specItem}>
+                  <Ionicons name="leaf" size={12} color="#2E8B57" />
+                  <Text style={styles.specText}>Eco-friendly</Text>
                 </View>
+              )}
+              {rental.security && (
+                <View style={styles.specItem}>
+                  <Ionicons name="shield" size={12} color="#003366" />
+                  <Text style={styles.specText}>Secure</Text>
+                </View>
+              )}
+            </View>
 
-                <Text style={styles.description} numberOfLines={2}>
-                  {rental.description}
+            {/* Footer Actions */}
+            <View style={styles.cardFooter}>
+              <View style={styles.priceSection}>
+                <Text style={[styles.price, { color: priceCategory.color }]}>
+                  {formatPrice(rental.price)}
                 </Text>
-
-                <View style={styles.priceContainer}>
-                  <View>
-                    <Text style={[styles.price, { color: getPriceColor(rental.price) }]}>
-                      {formatPrice(rental.price)}
-                    </Text>
-                    <Text style={styles.availableFrom}>Available {rental.availableFrom}</Text>
-                  </View>
-                  <View style={styles.priceTag}>
-                    <Text style={styles.priceTagText}>
-                      {getAffordabilityLabel(rental.price)}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Amenities */}
-                <View style={styles.amenitiesContainer}>
-                  {rental.amenities.slice(0, 3).map((amenity, index) => (
-                    <View key={index} style={styles.amenityTag}>
-                      <Ionicons name="checkmark" size={12} color="#2E8B57" />
-                      <Text style={styles.amenityText}>{amenity}</Text>
-                    </View>
-                  ))}
-                  {rental.amenities.length > 3 && (
-                    <Text style={styles.moreAmenities}>
-                      +{rental.amenities.length - 3} more
-                    </Text>
-                  )}
-                </View>
-
-                {/* Action Buttons */}
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity 
-                    style={styles.contactButton}
-                    onPress={() => handleContactOwner(rental)}
-                  >
-                    <Ionicons name="chatbubble-outline" size={16} color="#003366" />
-                    <Text style={styles.contactButtonText}>Contact</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.detailsButton}
-                    onPress={() => handleRentalPress(rental)}
-                  >
-                    <Ionicons name="eye-outline" size={16} color="white" />
-                    <Text style={styles.detailsButtonText}>View Details</Text>
-                  </TouchableOpacity>
-                </View>
+                <Text style={styles.availability}>Available {rental.availableFrom}</Text>
               </View>
-            </TouchableOpacity>
-          ))
-        )}
-
-        {/* Load More */}
-        <TouchableOpacity 
-          style={styles.loadMoreButton}
-          onPress={() => Alert.alert("Load More", "More featured properties coming soon!")}
-        >
-          <Ionicons name="add-circle-outline" size={20} color="#0033A0" />
-          <Text style={styles.loadMoreText}>Load More Properties</Text>
+              
+              <View style={styles.actionButtons}>
+                <TouchableOpacity style={styles.secondaryButton}>
+                  <Ionicons name="chatbubble" size={16} color="#003366" />
+                  <Text style={styles.secondaryButtonText}>Inquire</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.primaryButton,
+                    rental.instantBooking && styles.instantButton
+                  ]}
+                  onPress={() => handleRentalPress(rental)}
+                >
+                  <Ionicons 
+                    name={rental.instantBooking ? "flash" : "eye"} 
+                    size={16} 
+                    color="white" 
+                  />
+                  <Text style={styles.primaryButtonText}>
+                    {rental.instantBooking ? 'Book Now' : 'View'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
         </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#003366" />
+      
+      {/* Enhanced Animated Header */}
+      <Animated.View style={[styles.animatedHeader, { opacity: headerOpacity }]}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerTitleSection}>
+            <Ionicons name="diamond" size={20} color="#003366" />
+            <Text style={styles.headerTitle}>Premium</Text>
+          </View>
+          <TouchableOpacity style={styles.headerButton}>
+            <Ionicons name="notifications" size={22} color="#003366" />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={refreshRentals}
+            colors={["#003366"]}
+            tintColor="#003366"
+          />
+        }
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+      >
+        {/* Hero Section with Search */}
+        <View style={styles.heroSection}>
+          <Animated.View 
+            style={[
+              styles.heroContent,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideUpAnim }]
+              }
+            ]}
+          >
+            <Text style={styles.heroTitle}>World-Class Rentals</Text>
+            <Text style={styles.heroSubtitle}>
+              Discover exceptional properties that redefine luxury living
+            </Text>
+            
+            {/* Smart Search */}
+            <View style={styles.searchContainer}>
+              <Ionicons name="search" size={20} color="#666" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search premium properties..."
+                placeholderTextColor="#999"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Ionicons name="close-circle" size={20} color="#666" />
+                </TouchableOpacity>
+              )}
+            </View>
+          </Animated.View>
+        </View>
+
+        {/* Premium Stats */}
+        <Animated.View 
+          style={[
+            styles.statsContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideUpAnim }]
+            }
+          ]}
+        >
+          {stats.map((stat, index) => (
+            <View key={index} style={styles.statCard}>
+              <View style={styles.statHeader}>
+                <View style={styles.statIcon}>
+                  <Ionicons name={stat.icon as any} size={16} color="#003366" />
+                </View>
+                <Text style={styles.statTrend}>{stat.trend}</Text>
+              </View>
+              <Text style={styles.statValue}>{stat.value}</Text>
+              <Text style={styles.statLabel}>{stat.label}</Text>
+            </View>
+          ))}
+        </Animated.View>
+
+        {/* Smart Filter Tabs */}
+        <View style={styles.filterSection}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterContent}
+          >
+            {filters.map((filter) => (
+              <TouchableOpacity
+                key={filter.id}
+                style={[
+                  styles.filterChip,
+                  activeFilter === filter.id && styles.filterChipActive
+                ]}
+                onPress={() => setActiveFilter(filter.id)}
+              >
+                <Ionicons 
+                  name={filter.icon as any} 
+                  size={16} 
+                  color={activeFilter === filter.id ? "white" : "#003366"} 
+                />
+                <Text style={[
+                  styles.filterText,
+                  activeFilter === filter.id && styles.filterTextActive
+                ]}>
+                  {filter.label}
+                </Text>
+                <View style={[
+                  styles.filterCount,
+                  activeFilter === filter.id && styles.filterCountActive
+                ]}>
+                  <Text style={styles.filterCountText}>{filter.count}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* World-Class Features */}
+        <View style={styles.featuresSection}>
+          <Text style={styles.featuresTitle}>Why We're World-Class</Text>
+          <View style={styles.featuresGrid}>
+            {worldClassFeatures.map((feature, index) => (
+              <View key={index} style={styles.featureCard}>
+                <View style={styles.featureIcon}>
+                  <Ionicons name={feature.icon as any} size={24} color="#003366" />
+                </View>
+                <Text style={styles.featureCardTitle}>{feature.title}</Text>
+                <Text style={styles.featureCardDescription}>{feature.description}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Premium Properties Grid */}
+        <View style={styles.propertiesSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>
+              {filteredRentals.length} Premium Properties
+            </Text>
+            <Text style={styles.sectionSubtitle}>
+              Hand-curated for exceptional living experiences
+            </Text>
+          </View>
+
+          <View style={styles.propertiesGrid}>
+            {filteredRentals.map(renderPremiumCard)}
+          </View>
+        </View>
+
+        {/* Premium CTA */}
+        <View style={styles.ctaSection}>
+          <Text style={styles.ctaTitle}>Ready for Premium Living?</Text>
+          <Text style={styles.ctaDescription}>
+            Join thousands of discerning residents who trust Hama Bwana for exceptional rental experiences
+          </Text>
+          <TouchableOpacity style={styles.ctaButton}>
+            <Text style={styles.ctaButtonText}>Explore All Premium</Text>
+            <Ionicons name="arrow-forward" size={18} color="white" />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -385,389 +629,562 @@ export default function Featured() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#ffffff",
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+  animatedHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 90,
+    backgroundColor: 'white',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 15,
-    backgroundColor: "white",
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    paddingTop: 40,
+    zIndex: 1000,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    })
   },
   headerContent: {
-    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#003366",
-    marginBottom: 4,
+  headerTitleSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  subtitle: {
-    fontSize: 14,
-    color: "#666",
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#003366',
+    marginLeft: 8,
   },
-  filterButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: "#f0f4ff",
-    marginTop: 4,
+  headerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0f4ff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  statsBar: {
-    flexDirection: "row",
-    backgroundColor: "white",
-    paddingVertical: 20,
+  heroSection: {
+    backgroundColor: "#003366",
+    paddingTop: 70,
     paddingHorizontal: 20,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    paddingBottom: 30,
   },
-  statItem: {
+  heroContent: {
+    alignItems: 'center',
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    color: "rgba(255,255,255,0.8)",
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 25,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white",
+    width: '100%',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    })
+  },
+  searchInput: {
     flex: 1,
+    marginLeft: 12,
+    fontSize: 16,
+    color: "#333",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 20,
+    gap: 12,
+    marginTop: -40,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    })
+  },
+  statHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  statIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#f0f4ff",
+    justifyContent: "center",
     alignItems: "center",
   },
-  statNumber: {
-    fontSize: 18,
+  statTrend: {
+    fontSize: 12,
     fontWeight: "700",
+    color: "#2E8B57",
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: "800",
     color: "#003366",
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
     color: "#666",
-    textAlign: "center",
   },
-  statDivider: {
-    width: 1,
-    backgroundColor: "#e9ecef",
-    marginHorizontal: 10,
+  filterSection: {
+    paddingHorizontal: 20,
+    marginBottom: 25,
   },
-  scrollView: {
-    flex: 1,
+  filterContent: {
+    gap: 12,
   },
-  scrollContent: {
-    padding: 15,
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginRight: 8,
+    borderWidth: 2,
+    borderColor: '#e9ecef',
   },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "white",
-    padding: 15,
+  filterChipActive: {
+    backgroundColor: '#003366',
+    borderColor: '#003366',
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#003366',
+    marginLeft: 8,
+    marginRight: 8,
+  },
+  filterTextActive: {
+    color: 'white',
+  },
+  filterCount: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 12,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#e9ecef",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
   },
-  searchText: {
-    flex: 1,
-    marginLeft: 10,
-    color: "#666",
-    fontSize: 16,
+  filterCountActive: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
   },
-  premiumBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "center",
-    backgroundColor: "#fff8e1",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#FFD700",
-    marginBottom: 20,
-  },
-  premiumText: {
+  filterCountText: {
     fontSize: 12,
-    fontWeight: "700",
-    color: "#DAA520",
-    marginLeft: 6,
+    fontWeight: '800',
+    color: '#003366',
   },
-  sectionTitle: {
-    fontSize: 22,
+  featuresSection: {
+    paddingHorizontal: 20,
+    marginBottom: 30,
+  },
+  featuresTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#003366",
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  featuresGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 15,
+  },
+  featureCard: {
+    width: (SCREEN_WIDTH - 55) / 2,
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    })
+  },
+  featureIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#f0f4ff",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  featureCardTitle: {
+    fontSize: 16,
     fontWeight: "700",
     color: "#003366",
-    marginBottom: 5,
-    textAlign: "center",
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  featureCardDescription: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  propertiesSection: {
+    paddingHorizontal: 15,
+  },
+  sectionHeader: {
+    alignItems: 'center',
+    marginBottom: 25,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#003366",
+    marginBottom: 8,
   },
   sectionSubtitle: {
     fontSize: 14,
     color: "#666",
-    marginBottom: 25,
-    textAlign: "center",
-    lineHeight: 20,
+    textAlign: 'center',
   },
-  card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    marginBottom: 20,
+  propertiesGrid: {
+    gap: 25,
+  },
+  premiumCard: {
+    backgroundColor: "white",
+    borderRadius: 24,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 12,
+      },
+    })
   },
-  imageContainer: {
-    position: 'relative',
+  cardMedia: {
+    position: "relative",
   },
-  image: {
+  cardImage: {
     width: "100%",
-    height: 220,
+    height: 240,
   },
-  featuredBadge: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
+  mediaOverlay: {
+    ...StyleSheet.absoluteFillObject,
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: "#0033A0",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    padding: 16,
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  categoryBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 12,
   },
-  featuredText: {
+  categoryText: {
+    fontSize: 12,
+    fontWeight: "800",
+    marginLeft: 4,
+  },
+  featureBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.7)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  featureBadgeText: {
     color: "white",
     fontSize: 10,
     fontWeight: "700",
     marginLeft: 4,
   },
-  affordabilityBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 50,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+  actionContainer: {
+    gap: 8,
   },
-  affordabilityText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#003366",
-  },
-  favoriteButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+  iconButton: {
+    backgroundColor: "rgba(0,0,0,0.5)",
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    padding: 6,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  imageOverlay: {
-    position: 'absolute',
+  statsBar: {
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    padding: 8,
+    flexDirection: "row",
+    justifyContent: "space-around",
+    backgroundColor: "rgba(0,0,0,0.8)",
+    padding: 12,
   },
-  quickInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  statPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
-  quickInfoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  quickInfoText: {
-    color: 'white',
+  statPillText: {
+    color: "white",
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "700",
   },
-  info: {
-    padding: 16,
+  cardContent: {
+    padding: 20,
   },
-  infoHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+  contentHeader: {
+    marginBottom: 12,
+  },
+  titleSection: {
     marginBottom: 8,
   },
-  name: {
-    fontSize: 18,
-    fontWeight: "700",
+  propertyName: {
+    fontSize: 20,
+    fontWeight: "800",
     color: "#003366",
-    flex: 1,
-    marginRight: 10,
-    lineHeight: 22,
+    lineHeight: 24,
+    marginBottom: 8,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  ratingSection: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   rating: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#003366",
     marginLeft: 4,
   },
   reviews: {
     fontSize: 12,
     color: "#666",
-    marginLeft: 2,
+    marginLeft: 4,
   },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
+  metaSection: {
+    marginBottom: 12,
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
   },
   location: {
     fontSize: 14,
     color: "#666",
+    marginLeft: 6,
+  },
+  ownerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  ownerName: {
+    fontSize: 12,
+    color: "#2E8B57",
+    fontWeight: "600",
     marginLeft: 4,
   },
-  description: {
-    fontSize: 14,
+  responseTime: {
+    fontSize: 11,
     color: "#666",
-    lineHeight: 18,
-    marginBottom: 12,
   },
-  priceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  price: {
-    fontSize: 20,
-    fontWeight: "700",
-  },
-  availableFrom: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-  priceTag: {
-    backgroundColor: "#f0f4ff",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#0033A0",
-  },
-  priceTagText: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: "#003366",
-  },
-  amenitiesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    marginBottom: 15,
+  featuresGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
+    marginBottom: 12,
   },
-  amenityTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  featureChip: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#f0f4ff",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#0033A0",
     gap: 4,
   },
-  amenityText: {
+  featureChipText: {
     fontSize: 12,
     color: "#003366",
-    fontWeight: '500',
+    fontWeight: "500",
   },
-  moreAmenities: {
+  specsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 20,
+  },
+  specItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  specText: {
+    fontSize: 11,
+    color: "#666",
+    fontWeight: "500",
+  },
+  cardFooter: {
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+    paddingTop: 16,
+  },
+  priceSection: {
+    marginBottom: 16,
+  },
+  price: {
+    fontSize: 24,
+    fontWeight: "800",
+    marginBottom: 4,
+  },
+  availability: {
     fontSize: 12,
     color: "#666",
-    fontStyle: 'italic',
   },
   actionButtons: {
-    flexDirection: 'row',
-    gap: 10,
+    flexDirection: "row",
+    gap: 12,
   },
-  contactButton: {
+  secondaryButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#f0f4ff",
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#0033A0",
+    borderColor: "#003366",
     gap: 6,
   },
-  contactButtonText: {
+  secondaryButtonText: {
     color: "#003366",
     fontWeight: "600",
     fontSize: 14,
   },
-  detailsButton: {
+  primaryButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: "#0033A0",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#003366",
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     gap: 6,
   },
-  detailsButtonText: {
+  instantButton: {
+    backgroundColor: "#FF6B35",
+  },
+  primaryButtonText: {
     color: "white",
     fontWeight: "600",
     fontSize: 14,
   },
-  loadMoreButton: {
-    flexDirection: 'row',
+  ctaSection: {
+    backgroundColor: "#003366",
+    margin: 20,
+    padding: 30,
+    borderRadius: 24,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: "white",
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#0033A0",
-    marginTop: 10,
-    gap: 8,
   },
-  loadMoreText: {
-    color: "#0033A0",
-    fontWeight: "600",
-    fontSize: 16,
+  ctaTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    textAlign: 'center',
+    marginBottom: 12,
   },
-  emptyState: {
-    alignItems: 'center',
-    padding: 40,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    marginVertical: 20,
-  },
-  emptyStateTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#003366",
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyStateText: {
+  ctaDescription: {
     fontSize: 14,
-    color: "#666",
+    color: "rgba(255,255,255,0.8)",
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: 20,
+  },
+  ctaButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white",
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 16,
+    gap: 8,
+  },
+  ctaButtonText: {
+    color: "#003366",
+    fontSize: 16,
+    fontWeight: "700",
   },
   bottomSpacer: {
     height: 30,

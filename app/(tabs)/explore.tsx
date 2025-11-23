@@ -3,7 +3,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
   Dimensions,
   Image,
   RefreshControl,
@@ -145,64 +144,58 @@ export default function Explore() {
     // Simulate API call
     setTimeout(() => {
       setRefreshing(false);
-      Alert.alert("Refreshed", "Latest trends updated!");
     }, 1500);
   };
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      Alert.alert("Search", `Searching for: ${searchQuery}`);
+      console.log("Searching for:", searchQuery);
       // TODO: Implement search functionality
     } else {
-      Alert.alert("Search", "Please enter a search term");
+      console.log("Please enter a search term");
     }
   };
 
   const handlePopularSearch = (search: any) => {
     setSearchQuery(search.term);
-    Alert.alert("Search", `Searching for: ${search.term} (${search.count} properties)`);
+    console.log("Searching for:", search.term, "with", search.count, "properties");
   };
 
   const handleLocationPress = (location: any) => {
-    router.push({
-      pathname: "/(tabs)/map",
-      params: { location: JSON.stringify(location) }
-    });
+    // Use simple navigation without complex objects
+    router.push(`/(tabs)/map?location=${encodeURIComponent(location.name)}`);
   };
 
   const handlePropertyTypePress = (type: any) => {
     setSelectedPropertyType(type.id === selectedPropertyType ? null : type.id);
-    Alert.alert("Filter", `Showing ${type.name} properties`);
+    console.log("Showing", type.name, "properties");
   };
 
   const handlePriceRangePress = (range: any) => {
     setSelectedPriceRange(range.id === selectedPriceRange ? null : range.id);
-    Alert.alert("Filter", `Price range: ${range.range}`);
+    console.log("Price range:", range.range);
   };
 
   const handleAdvancedSearch = () => {
-    Alert.alert(
-      "Advanced Search",
-      "Customize your search with multiple filters",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Apply Filters", onPress: () => console.log("Apply advanced filters") }
-      ]
-    );
+    console.log("Advanced search opened");
+    router.push("/advanced-search");
   };
 
   const handleRentalPress = (rental: any) => {
-    router.push({
-      pathname: "/rental-details",
-      params: { rental: JSON.stringify(rental) }
-    });
+    // Use simple navigation without complex objects
+    router.push(`/rental-details?id=${rental.id}`);
   };
 
   const clearFilters = () => {
     setSelectedPriceRange(null);
     setSelectedPropertyType(null);
     setSearchQuery("");
-    Alert.alert("Filters Cleared", "All filters have been reset");
+    console.log("Filters cleared");
+  };
+
+  const handleNotifications = () => {
+    console.log("Notifications opened");
+    router.push("/notifications");
   };
 
   return (
@@ -215,7 +208,7 @@ export default function Explore() {
         </View>
         <TouchableOpacity 
           style={styles.notificationButton}
-          onPress={() => Alert.alert("Notifications", "Your notifications will appear here")}
+          onPress={handleNotifications}
         >
           <Ionicons name="notifications-outline" size={24} color="#003366" />
           <View style={styles.notificationDot} />
@@ -290,7 +283,7 @@ export default function Explore() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Trending Locations</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/all-locations")}>
               <Text style={styles.seeAllText}>View All</Text>
             </TouchableOpacity>
           </View>
@@ -396,7 +389,7 @@ export default function Explore() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Recently Viewed</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={clearFilters}>
                 <Text style={styles.seeAllText}>Clear All</Text>
               </TouchableOpacity>
             </View>
